@@ -173,7 +173,7 @@ async def handle_chat(event):
         await event.reply(f"Error: {type(e).__name__}: {str(e)}")
 
 # Create client with unique session name
-client = TelegramClient('userbot_simple_final', TELEGRAM_API_ID, TELEGRAM_API_HASH)
+client = TelegramClient('userbot_new_session', TELEGRAM_API_ID, TELEGRAM_API_HASH)
 
 @client.on(events.NewMessage(incoming=True))
 async def message_handler(event):
@@ -253,5 +253,31 @@ async def main():
         print(f"❌ Error: {e}")
         raise
 
+# Simple HTTP server for Render port detection
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(b'<h1>Telegram Userbot is running!</h1><p>Status: Active</p>')
+    
+    def log_message(self, format, *args):
+        pass  # Suppress HTTP logs
+
+def start_http_server():
+    """Start HTTP server for Render port detection"""
+    port = int(os.environ.get('PORT', 10000))
+    server = HTTPServer(('0.0.0.0', port), HealthHandler)
+    print(f"🌐 HTTP server started on port {port}")
+    server.serve_forever()
+
 if __name__ == "__main__":
+    # Start HTTP server in background thread
+    http_thread = threading.Thread(target=start_http_server)
+    http_thread.daemon = True
+    http_thread.start()
+    
     asyncio.run(main())
